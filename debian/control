@@ -1,0 +1,12 @@
+Source: gitolite3-ldap
+Priority: optional
+Maintainer: Jeff Caffrey-Hill <jeff@caffreyhill.com>
+Build-Depends: debhelper (>= 8.0.0)
+Standards-Version: 3.9.3
+Section: vcs
+
+Package: gitolite3-ldap
+Architecture: any
+Depends: ${misc:Depends}, ${perl:Depends}, libnet-ldap-perl, libauthen-sasl-perl, libconfig-tiny-perl
+Description: a simple helloworld package
+ Just prints "Hi", it's very useful.

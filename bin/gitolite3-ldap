@@ -1,0 +1,51 @@
+#!/usr/bin/env perl
+use Net::LDAP;
+use Authen::SASL;
+use lib '/usr/share/gitolite3/lib';
+use Gitolite::Rc;
+use Gitolite::Common;
+
+use strict;
+use warnings;
+
+my $ldap_host = "ldap://localhost:389";
+if(defined $rc{'GITOLITE3_LDAP_HOST'}) {
+    $ldap_host = $rc{'GITOLITE3_LDAP_HOST'};
+}
+
+my $ldap = Net::LDAP->new($ldap_host);
+
+my $sasl = $rc{'LDAP_SASL'};
+
+my $result = undef;
+if (defined $rc{'LDAP_SASL'}) {
+    $result = $ldap->bind(sasl => $sasl);
+} elsif (defined $rc{LDAP_BIND_DN} && defined $rc{LDAP_BIND_PASS}) {
+    $result = $ldap->bind($rc{LDAP_BIND_DN}, password => $rc{LDAP_BIND_PASS});
+} else {
+   $result = $ldap->bind;
+}
+$result->code && die $result->error;
+
+my $ldap_filter = '(&(objectClass=ldapPublicKey)(uid=*))';
+if (defined $rc{LDAP_FILTER}) {
+    $ldap_filter = $rc{LDAP_FILTER};
+}
+
+my $ldap_base = $rc{LDAP_BASE};
+
+$result = $ldap->search(
+          base => $ldap_base,
+          filter => $ldap_filter,
+	  attrs => ['sshPublicKey', 'uid']
+        );
+$result->code && die $result->error;
+my @entries = $result->entries;
+foreach my $entry (@entries) {
+	my $uid = $entry->get_value('uid');
+	my $sshPublicKey = $entry->get_value('sshPublicKey');
+	print "command=\"/usr/share/gitolite3/gitolite-shell $uid\",no-port-forwarding,no-X11-forwarding,no-agent-forwarding,no-pty $sshPublicKey\n";
+}
+
+
+$ldap->unbind;

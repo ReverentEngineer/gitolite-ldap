@@ -1,0 +1,4 @@
+gitolite3-ldap*
+.debhelper
+debhelper-build-stamp
+files
